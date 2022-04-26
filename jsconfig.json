@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "baseUrl": "./app",
+    "target": "es6",
+    "paths": {
+      "#app/*": ["."],
+      "#environment": ["./environment.js"],
+      "#db/*": ["./db/*"],
+      "#db": ["./db"],
+      "#routes/*": ["./routes/*"],
+      "#routes": ["./routes"],
+      "#utils/*": ["./utils/*"],
+      "#utils": ["./utils"]
+    }
+  },
+  "exclude": ["node_modules"]
+}
