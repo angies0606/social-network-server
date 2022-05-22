@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser'
 import {upload, gfs} from './images.js';
 import './db.js';
 import { CommentModel, LikeModel, PostModel, UserModel } from './db.js';
@@ -9,12 +10,12 @@ import userRoutes from '#routes/user.routes.js';
 const app = express();
 const corsOptions = {
   origin: ['http://localhost:3000'],
+  credentials: true,
   optionsSuccessStatus: 200
 };
 app.use(cors(corsOptions));
 app.use(express.json());
-
-
+app.use(cookieParser());
 
 app.get('/posts', async (req, res) => {
   const posts = await PostModel.find({});
@@ -65,12 +66,35 @@ app.post('/posts/:id/comment', async(req, res) => {
     text: req.body.text
   })
   await comment.save();
+  const user = await UserModel.findById(comment.user).exec();
+  comment = {
+    ...comment._doc,
+    userAvatar: user.avatar
+  }
+
   res.status(200).json(comment);
 })
 
-app.get('/posts/:id/comments', async (req, res) => {
-  const comments = await CommentModel.find({post: req.params.id}).exec();
-  res.status(200).json(comments);
+app.get('/posts/:postId/comments', async (req, res) => {
+  const comments = await CommentModel.find({post: req.params.postId}).exec();
+  // console.log(comments);
+  const commentsWithAvatars = await Promise.all(comments.map(comment => {
+    return UserModel.findById(comment.user).exec().then(user => {
+      return {
+        ...comment._doc,
+        userAvatar: user.avatar
+      };
+    });
+  }));
+  // let commentsWithAvatars = comments.map(comment => {
+  //   const user = await UserModel.findById(comment.user).exec();
+  //   return {
+  //     ...comment._doc,
+  //     userAvatar: user.avatar
+  //   }
+  // })
+  // `console.log(commentsWithAvatars);`
+  res.status(200).json(commentsWithAvatars);
 })
 
 app.delete('/comments/:id', async (req, res) => {
@@ -79,16 +103,19 @@ app.delete('/comments/:id', async (req, res) => {
 })
 
 app.post('/images', upload.single('img'), (req, res) => {
-  console.log(req.file)
+  // console.log(req.file)
+  const fileId = req.file.id.toString();
+  const fileName = req.file.filename;
   res.status(201).send({
-    imageUrl: `${req.protocol}://${req.hostname}:${process.env.PORT}/images/${req.file.filename}`
+    imageUrl: `${req.protocol}://${req.hostname}:${process.env.PORT}/images/${fileId}/${fileName}`
   })
+  // console.log(res);
 })
 
-app.get('/images/:filename', (req, res) => {
+app.get('/images/:fileId/:filename', (req, res) => {
   const filename = req.params.filename;
 
-  gfs.find({ filename }).toArray((err, files) => {
+  gfs.find({ filename: filename }).toArray((err, files) => {
     if (!files || files.length === 0 || !files[0]) {
       return res.status(404).json({
         err: 'No file exists',

@@ -8,6 +8,12 @@ const UserSchema = mongoose.Schema({
   },
   nickname: {
     type: String
+  },
+  avatar: {
+    type: String
+  },
+  banner: {
+    type: String
   }
 });
 
