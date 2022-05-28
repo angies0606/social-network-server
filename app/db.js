@@ -35,7 +35,11 @@ const LikeSchema = mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'user'
-  }
+  },
+  post: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'post'
+  },
 })
 
 const PostSchema = mongoose.Schema({
@@ -49,22 +53,22 @@ const PostSchema = mongoose.Schema({
   image: {
     type: String
   },
-  likes: {
-    type: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'like'
-      }
-    ]
-  },
-  comments: {
-    type: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'comment'
-      }
-    ]
-  },
+  // likes: {
+  //   type: [
+  //     {
+  //       type: mongoose.Schema.Types.ObjectId,
+  //       ref: 'like'
+  //     }
+  //   ]
+  // },
+  // comments: {
+  //   type: [
+  //     {
+  //       type: mongoose.Schema.Types.ObjectId,
+  //       ref: 'comment'
+  //     }
+  //   ]
+  // },
   
 }, { timestamps: true })
 
