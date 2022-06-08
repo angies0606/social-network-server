@@ -120,34 +120,65 @@ export default function (app) {
     }
   })
 
- // app.post('/auth/refresh', async (req, res) => {
-  //   try {
-  //     const {_id: userId} = readRefreshCookie(req)
-  //     console.log('USER ID: ', userId)
+  app.post('/auth/refresh', async (req, res) => {
+    try {
+      const refreshToken = req.cookies?.[process.env.REFRESH_TOKEN_COOKIE_NAME];
+      if (!refreshToken) {
+        throw new Error();
+      }
 
-  //     if (!userId) {
-  //       throw new Error()
-  //     }
-  //     // verifying if we have twitter access token. If YES, then we generate new jwt tokens
-  //     const twitterAccessToken = await getUserTwitterOauthAccessToken(userId)
+      const {userId} = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET_KEY);
+      if (!userId) {
+        throw new Error();
+      }
 
-  //     if (!twitterAccessToken) {
-  //       await clearUserTwitterOauthAccessToken(userId)
+      const user = await UserModel.findById(userId);
+      
+      if (!user) {
+        throw new Error ('Пользователь не найден');
+      }
 
-  //       throw new Error()
-  //     }
+      const accessTokenExpirationSeconds = Number(process.env.ACCESS_TOKEN_EXPIRATION_SECONDS);
+  
+      const accessToken = jwt.sign({
+        userId: user._id
+      }, process.env.ACCESS_TOKEN_SECRET_KEY, {
+        expiresIn: accessTokenExpirationSeconds
+      });
+      res.cookie(process.env.ACCESS_TOKEN_COOKIE_NAME, accessToken, {
+        maxAge: accessTokenExpirationSeconds * 1000,
+        secure: IS_PRODUCTION,
+        httpOnly: true,
+        sameSite: true
+      });
+      
+      const refreshTokenExpirationSeconds = Number(process.env.REFRESH_TOKEN_EXPIRATION_SECONDS);
+      const newRefreshToken = jwt.sign({
+        userId: user._id
+      }, process.env.REFRESH_TOKEN_SECRET_KEY, {
+        expiresIn: refreshTokenExpirationSeconds
+      });
+      res.cookie(process.env.REFRESH_TOKEN_COOKIE_NAME, newRefreshToken, {
+        maxAge: refreshTokenExpirationSeconds * 1000,
+        secure: IS_PRODUCTION,
+        httpOnly: true,
+        sameSite: true
+      });
 
-  //     // await TwitterOauthAccessTokenModel.findOneAndUpdate({_id: twitter_oauth_access_token}, {expireAt: moment().add(parseInt(ACCESS_EXPIRATION_SECONDS), 'seconds')}).exec()
+      res.status(200).json({success: true});
+    } catch (e) {
+      const error = new Error('Пользователь не найден');
+      cleanRefreshCookie(res);
+      res.status(401).json(error);
+    }
+  });
+}
 
-  //     generateSessionCookies(res, userId)
-
-  //     res.json({success: true})
-  //     return
-
-  //   } catch (e) {
-  //     console.log(e)
-  //     clearSessionCookies(res)
-  //     res.status(401).json({message: 'Session expired'})
-  //   }
-  // })
-} 
+export function cleanRefreshCookie(res) {
+    res.cookie(process.env.REFRESH_TOKEN_COOKIE_NAME, null, {
+    maxAge: null,
+    secure: IS_PRODUCTION,
+    httpOnly: true,
+    sameSite: true
+  });
+}

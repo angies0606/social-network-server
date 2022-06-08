@@ -1,5 +1,6 @@
 import { UserModel } from '#app/db.js';
 import {upload, gfs} from '../images.js';
+import {verifyAccess} from '#utils/auth.utils.js';
 import mongoose from 'mongoose';
 
 export default function (app) {
@@ -36,15 +37,15 @@ export default function (app) {
       const imageUrl = `${req.protocol}://${req.hostname}:${process.env.PORT}/images/${fileId}/${fileName}`;
       const user = await UserModel.findById(req.params.userId).exec();
       const userAvatar = user.avatar;
-      const newUser = await UserModel.findByIdAndUpdate(req.params.userId, {
+      const updatedUser = await UserModel.findByIdAndUpdate(req.params.userId, {
         avatar: imageUrl
       },{new: true}).exec();
-      if(userAvatar !== '') {
+      if(userAvatar) {
         const oldImageUrlArr = userAvatar.split('/');
         const oldImageId = oldImageUrlArr[oldImageUrlArr.length - 2];
         gfs.delete(new mongoose.Types.ObjectId(oldImageId));
       }
-      res.status(200).json(newUser);
+      res.status(200).json(updatedUser);
     } catch (e) {
       next(e);
     }
@@ -58,21 +59,56 @@ export default function (app) {
       const user = await UserModel.findById(req.params.userId).exec();
       const userBanner = user.banner;
     
-      const newUser = await UserModel.findByIdAndUpdate(req.params.userId, {
+      const updatedUser = await UserModel.findByIdAndUpdate(req.params.userId, {
         banner: imageUrl
       },{new: true}).exec();
 
-      if(userBanner !== '') {
+      if(userBanner) {
         const oldImageUrlArr = userBanner.split('/');
         const oldImageId = oldImageUrlArr[oldImageUrlArr.length - 2];
         gfs.delete(new mongoose.Types.ObjectId(oldImageId));
       }
       
-      res.status(200).json(newUser);
+      res.status(200).json(updatedUser);
     } catch (e) {
       next(e);
     }
   });
+
+  app.delete('/user/avatar', verifyAccess, async (req, res, next) => {
+    try {
+      const {authedUser} = res.locals;
+      const imageUrl = req.body.avatar;
+      const imageUrlArr = imageUrl.split('/');
+      const imageId = imageUrlArr[imageUrlArr.length - 2];
+      gfs.delete(new mongoose.Types.ObjectId(imageId));
+      const updatedUser = await UserModel.findByIdAndUpdate(authedUser._id, {
+        avatar: ''
+      },{new: true}).exec();
+      
+      res.status(200).json(updatedUser);
+    } catch (e) {
+      next(e);
+    }
+  })
+
+  app.delete('/user/banner', verifyAccess, async (req, res, next) => {
+    try {
+      const {authedUser} = res.locals;
+      const imageUrl = req.body.banner;
+      const imageUrlArr = imageUrl.split('/');
+      const imageId = imageUrlArr[imageUrlArr.length - 2];
+      gfs.delete(new mongoose.Types.ObjectId(imageId));
+      const updatedUser = await UserModel.findByIdAndUpdate(authedUser._id, {
+        banner: ''
+      },{new: true}).exec();
+      
+      res.status(200).json(updatedUser);
+    } catch (e) {
+      next(e);
+    }
+  })
+
 
   // app.post('/images', upload.single('img'), (req, res) => {
   //   // console.log(req.file)

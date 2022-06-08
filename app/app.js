@@ -22,7 +22,7 @@ app.use(cookieParser());
 app.get('/posts/:userId', verifyAccess, async (req, res, next) => {
   try {
     const {authedUser} = res.locals;
-    const posts = await PostModel.find({user: req.params.userId}).exec();
+    const posts = await PostModel.find({user: req.params.userId}).sort({createdAt: -1}).exec();
 
     const postsWithData = await Promise.all(posts.map(post => {
       return Promise.all(
@@ -36,18 +36,17 @@ app.get('/posts/:userId', verifyAccess, async (req, res, next) => {
           CommentModel.find({post: post._id}).exec().then(comments => {
             return comments.length;
           }),
-          CommentModel.find({post: post._id}).exec().then(comments => {
-            return comments.map(comment => {
-              return comment._id
-            });
-          }),
+          // CommentModel.find({post: post._id}).exec().then(comments => {
+          //   return comments.map(comment => {
+          //     return comment._id
+          //   });
+          // }),
         ]
-      ).then(([isLiked, nLikes, nComments, comments]) => {
+      ).then(([isLiked, nLikes, nComments]) => {
         return {
           ...post.toObject(),
           isLiked,
           nLikes,
-          comments,
           nComments
         }
       })
@@ -64,9 +63,7 @@ app.post('/posts', async (req, res) => {
     user: req.body.user,
     createdAt: req.body.createdAt,
     text: req.body.text,
-    image: req.body.image,
-    // likes: [],
-    // comments: []
+    image: req.body.image
   });
   await post.save();
   res.status(200).json(post);
@@ -79,9 +76,17 @@ app.patch('/posts/:id', async (req, res) => {
   res.status(200).json(post);
 
 })
-app.delete('/posts/:id', async(req, res) => {
-  const post = await PostModel.findByIdAndDelete(req.params.id).exec();
-  res.status(200).json(post);
+app.delete('/posts/:postId', async(req, res) => {
+  const post = await PostModel.findByIdAndDelete(req.params.postId).exec();
+  const likes = await LikeModel.deleteMany({post: req.params.postId}).exec();
+  const comments = await CommentModel.deleteMany({post: req.params.postId}).exec();
+  const imageUrl = post.image;
+  if(imageUrl) {
+    const imageUrlArr = imageUrl.split('/');
+    const imageId = imageUrlArr[imageUrlArr.length - 2];
+    gfs.delete(new mongoose.Types.ObjectId(imageId));
+  }
+  res.status(200).json(post._id);
 })
 
 app.post('/posts/:postId/like', verifyAccess, async(req, res) => {
@@ -136,7 +141,7 @@ app.post('/posts/:postId/comment', async(req, res) => {
 })
 
 app.get('/posts/:postId/comments', async (req, res) => {
-  const receivedComments = await CommentModel.find({post: req.params.postId}).exec();
+  const receivedComments = await CommentModel.find({post: req.params.postId}).sort({createdAt: 1}).exec();
   // console.log(comments);
   const commentsData = await Promise.all(receivedComments.map(comment => {
     return UserModel.findById(comment.user).exec().then(user => {
@@ -166,6 +171,25 @@ app.delete('/comments/:id', async (req, res) => {
   const comments = await CommentModel.find({post: deletedComment.post}).exec();
   const nComments = comments.length;
   res.status(200).json({deletedComment, nComments});
+})
+
+app.delete('/posts/:postId/image', async (req, res, next) => {
+  try {
+    const post = await PostModel.findById(req.params.postId).exec();
+    const imageUrl = post.image;
+    console.log(imageUrl);
+    const imageUrlArr = imageUrl.split('/');
+    console.log(imageUrlArr);
+    const imageId = imageUrlArr[imageUrlArr.length - 2];
+    gfs.delete(new mongoose.Types.ObjectId(imageId));
+    const newPost = await PostModel.findByIdAndUpdate(req.params.postId, {
+      image: ''
+    },{new: true}).exec();
+    res.status(200).json(newPost);
+  }
+  catch (e) {
+    next(e);
+  }
 })
 
 app.post('/images', upload.single('img'), (req, res) => {
