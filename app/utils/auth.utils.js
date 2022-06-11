@@ -1,6 +1,6 @@
-import jwt from 'jsonwebtoken';
-import {UserModel} from '#app/db.js';
-import {IS_PRODUCTION} from '#app/environment.js';
+import jwt from "jsonwebtoken";
+import {UserModel} from "#app/db.js";
+import {IS_PRODUCTION} from "#app/environment.js";
 
 export async function verifyAccess(req, res, next) {
   try {

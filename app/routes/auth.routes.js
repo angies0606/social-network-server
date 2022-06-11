@@ -1,9 +1,8 @@
-import { UserModel, PasswordModel } from '#app/db.js';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-import {IS_PRODUCTION} from '#app/environment.js';
-import {cleanAuthCookies, verifyAccess} from '#utils/auth.utils.js';
-
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import { cleanAuthCookies, verifyAccess } from "#utils/auth.utils.js";
+import { IS_PRODUCTION } from "#app/environment.js";
+import { UserModel, PasswordModel } from "#app/db.js";
 
 export default function (app) {
   app.post('/auth/register', async (req, res) => {
@@ -21,8 +20,9 @@ export default function (app) {
       const user = await UserModel.create({
         name,
         nickname,
-        avatar
-      })
+        avatar: '',
+        banner: ''
+      });
 
       const encryptedPassword = await bcrypt.hash(password, 10);
 
@@ -42,7 +42,6 @@ export default function (app) {
     try {
       const {nickname, password} = req.body;
 
-
       // Проверяем логин/пароль
 
       if (!(nickname && password)) {
@@ -50,27 +49,24 @@ export default function (app) {
       }
       
       const user = await UserModel.findOne({nickname});
-      console.log('user: ', user)
       if (!user) {
         throw new Error ('Пользователь не найден');
       }
+
       const passwordModel = await PasswordModel.findOne({user: user._id});
-      console.log(passwordModel)
       if (!passwordModel || !(await bcrypt.compare(password, passwordModel.password))) {
         throw new Error ('Неправильный пароль');
       }
 
-
       // Генерируем куки для сессии пользователя
-
       // Генерируем access токен
       const accessTokenExpirationSeconds = Number(process.env.ACCESS_TOKEN_EXPIRATION_SECONDS);
-      console.log("accessTokenExpirationSeconds", process.env.ACCESS_TOKEN_EXPIRATION_SECONDS)
       const accessToken = jwt.sign({
         userId: user._id
       }, process.env.ACCESS_TOKEN_SECRET_KEY, {
         expiresIn: accessTokenExpirationSeconds
       });
+
       res.cookie(process.env.ACCESS_TOKEN_COOKIE_NAME, accessToken, {
         maxAge: accessTokenExpirationSeconds * 1000,
         secure: IS_PRODUCTION,
@@ -102,9 +98,17 @@ export default function (app) {
   });
 
   app.post('/auth/logout', verifyAccess, async (req, res) => {
-    // Очищаем куки
-    cleanAuthCookies(res);
-    res.status(200).json({success: true});
+    try {
+      // Очищаем куки
+
+      cleanAuthCookies(res);
+      res.status(200).json({success: true});
+    }
+    catch (e) {
+      console.log(e)
+      cleanAuthCookies(res);
+      res.status(400).json(e);
+    }
   });
 
   app.post('/auth/me', verifyAccess, async (req, res) => {
@@ -114,9 +118,9 @@ export default function (app) {
       res.status(200).json(authedUser);
     }
     catch (e) {
-      console.log(e)
+      const error = new Error('Пользователь не найден');
       cleanAuthCookies(res);
-      res.status(400).json(e);
+      res.status(400).json(error);
     }
   })
 
@@ -133,13 +137,11 @@ export default function (app) {
       }
 
       const user = await UserModel.findById(userId);
-      
       if (!user) {
         throw new Error ('Пользователь не найден');
       }
 
       const accessTokenExpirationSeconds = Number(process.env.ACCESS_TOKEN_EXPIRATION_SECONDS);
-  
       const accessToken = jwt.sign({
         userId: user._id
       }, process.env.ACCESS_TOKEN_SECRET_KEY, {

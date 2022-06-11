@@ -1,6 +1,6 @@
 
-import mongoose from 'mongoose';
-import multer from 'multer';
+import mongoose from "mongoose";
+import multer from "multer";
 import {GridFsStorage} from 'multer-gridfs-storage';
 
 const storage = new GridFsStorage({
@@ -16,7 +16,6 @@ const storage = new GridFsStorage({
 });
 
 export const upload = multer({ storage });
-
 
 const connect = mongoose.createConnection(process.env.DB_ADDRESS, {
   useNewUrlParser: true,

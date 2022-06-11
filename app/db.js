@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 mongoose.connect(process.env.DB_ADDRESS);
 
@@ -17,6 +17,19 @@ const UserSchema = mongoose.Schema({
   }
 });
 
+const PostSchema = mongoose.Schema({
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'user'
+  },
+  text: {
+    type: String
+  },
+  image: {
+    type: String
+  },
+}, { timestamps: true });
+
 const CommentSchema = mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
@@ -29,7 +42,7 @@ const CommentSchema = mongoose.Schema({
   text: {
     type: String
   }
-}, { timestamps: true })
+}, { timestamps: true });
 
 const LikeSchema = mongoose.Schema({
   user: {
@@ -40,37 +53,7 @@ const LikeSchema = mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'post'
   },
-})
-
-const PostSchema = mongoose.Schema({
-  user: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'user'
-  },
-  text: {
-    type: String
-  },
-  image: {
-    type: String
-  },
-  // likes: {
-  //   type: [
-  //     {
-  //       type: mongoose.Schema.Types.ObjectId,
-  //       ref: 'like'
-  //     }
-  //   ]
-  // },
-  // comments: {
-  //   type: [
-  //     {
-  //       type: mongoose.Schema.Types.ObjectId,
-  //       ref: 'comment'
-  //     }
-  //   ]
-  // },
-  
-}, { timestamps: true })
+});
 
 const PasswordSchema = mongoose.Schema({
   password: String,
@@ -78,7 +61,7 @@ const PasswordSchema = mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'user'
   }
-})
+});
 
 export const UserModel = mongoose.model('user', UserSchema);
 export const PostModel = mongoose.model('post', PostSchema);
