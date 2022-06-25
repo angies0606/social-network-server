@@ -1,9 +1,10 @@
 import mongoose from "mongoose";
+import paginate from 'mongoose-paginate-v2';
 
 mongoose.connect(process.env.DB_ADDRESS);
 
 const UserSchema = mongoose.Schema({
-  name: {
+  email: {
     type: String
   },
   nickname: {
@@ -16,6 +17,7 @@ const UserSchema = mongoose.Schema({
     type: String
   }
 });
+UserSchema.plugin(paginate);
 
 const PostSchema = mongoose.Schema({
   user: {
@@ -29,6 +31,7 @@ const PostSchema = mongoose.Schema({
     type: String
   },
 }, { timestamps: true });
+PostSchema.plugin(paginate);
 
 const CommentSchema = mongoose.Schema({
   user: {

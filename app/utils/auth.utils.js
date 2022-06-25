@@ -41,4 +41,10 @@ export function cleanAuthCookies(res) {
     httpOnly: true,
     sameSite: true
   });
+  res.cookie(process.env.REFRESH_TOKEN_COOKIE_NAME, null, {
+    maxAge: null,
+    secure: IS_PRODUCTION,
+    httpOnly: true,
+    sameSite: true
+  });
 }

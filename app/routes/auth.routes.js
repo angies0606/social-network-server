@@ -7,8 +7,8 @@ import { UserModel, PasswordModel } from "#app/db.js";
 export default function (app) {
   app.post('/auth/register', async (req, res) => {
     try {
-      const {name, nickname, password} = req.body;
-      if(!(name && nickname && password)) {
+      const {email, nickname, password} = req.body;
+      if(!(email && nickname && password)) {
         throw new Error('Нужно заполнить все поля');
       }
 
@@ -18,7 +18,7 @@ export default function (app) {
       }
 
       const user = await UserModel.create({
-        name,
+        email,
         nickname,
         avatar: '',
         banner: ''
@@ -40,15 +40,15 @@ export default function (app) {
 
   app.post('/auth/login', async (req, res) => {
     try {
-      const {nickname, password} = req.body;
+      const {login, password} = req.body;
 
       // Проверяем логин/пароль
 
-      if (!(nickname && password)) {
+      if (!(login && password)) {
         res.status(400).json("Нужно заполнить все поля");
       }
       
-      const user = await UserModel.findOne({nickname});
+      const user = await UserModel.findOne({nickname: login}) || await UserModel.findOne({email: login});
       if (!user) {
         throw new Error ('Пользователь не найден');
       }

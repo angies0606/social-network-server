@@ -2,15 +2,22 @@ import mongoose from "mongoose";
 import {upload, gfs} from "../images.js";
 import { UserModel } from "#app/db.js";
 import {verifyAccess} from "#utils/auth.utils.js";
+import { PaginationParameters } from "mongoose-paginate-v2";
 
 export default function (app) {
-  app.get('/users', verifyAccess, async (req, res) => {
+  app.get('/users', verifyAccess, async (req, res, next) => {
     try {
-      const users = await UserModel.find({});
-      res.status(200).json(users);
+      const [query, options] = new PaginationParameters(req).get();
+      const paginateResult = await UserModel.paginate(query, options);
+      console.log(paginateResult)
+      const users = paginateResult.docs || [];
+      res.status(200).json({
+        items: users,
+        hasNextPage: paginateResult.hasNextPage
+      });
     }
     catch (e) {
-
+      next(e);
     }
   });
 
@@ -48,7 +55,7 @@ export default function (app) {
     }
   });
 
-  app.post('/user/:userId/banner', upload.single('img'), verifyAccess, async (req, res, next) => {
+  app.post('/user/banner', upload.single('img'), verifyAccess, async (req, res, next) => {
     try {
       const {authedUser} = res.locals;
       const fileId = req.file.id.toString();
@@ -57,7 +64,7 @@ export default function (app) {
       const user = await UserModel.findById(authedUser._id).exec();
       const userBanner = user.banner;
     
-      const updatedUser = await UserModel.findByIdAndUpdate(authed._id, {
+      const updatedUser = await UserModel.findByIdAndUpdate(authedUser._id, {
         banner: imageUrl
       },{new: true}).exec();
 

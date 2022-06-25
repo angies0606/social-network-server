@@ -2,13 +2,21 @@ import mongoose from "mongoose";
 import { gfs } from "../images.js";
 import { verifyAccess } from "#utils/auth.utils.js";
 import { UserModel, PostModel, CommentModel, LikeModel } from "#app/db.js";
+import { PaginationParameters } from 'mongoose-paginate-v2';
 
 export default function (app) {
   app.get('/posts/:userId', verifyAccess, async (req, res, next) => {
     try {
       const {authedUser} = res.locals;
-      const posts = await PostModel.find({user: req.params.userId}).sort({createdAt: -1}).exec();
-  
+      const {userId} = req.params;
+
+      // const posts = await PostModel.find({user: req.params.userId}).sort({createdAt: -1}).exec();
+      const [query, options] = new PaginationParameters(req).get();
+      query.user = userId;
+      const paginateResult = await PostModel.paginate(query, options);
+      // console.log(paginateResult)
+      const posts = paginateResult.docs || [];
+
       const postsWithData = await Promise.all(posts.map(post => {
         return Promise.all(
           [
@@ -33,7 +41,10 @@ export default function (app) {
       
       }))
   
-      res.status(200).json(postsWithData);
+      res.status(200).json({
+        items: postsWithData,
+        hasNextPage: paginateResult.hasNextPage
+      });
     } catch (e) {
       next(e);
     }
