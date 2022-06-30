@@ -11,7 +11,7 @@ export default function (app) {
       })
     }
     catch (e) {
-
+      next(e);
     }
   })
   
@@ -38,7 +38,7 @@ export default function (app) {
       })
     }
     catch (e) {
-      
+      next(e);
     }
   })
 }

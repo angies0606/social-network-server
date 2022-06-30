@@ -50,7 +50,7 @@ export default function (app) {
     }
   })
   
-  app.post('/posts', verifyAccess, async (req, res) => {
+  app.post('/posts', verifyAccess, async (req, res, next) => {
     try {
       const {authedUser} = res.locals;
       const post = new PostModel({
@@ -63,11 +63,11 @@ export default function (app) {
       res.status(200).json(post);
     }
     catch (e) {
-  
+      next(e);
     }
   })
   
-  app.patch('/posts/:id', verifyAccess, async (req, res) => {
+  app.patch('/posts/:id', verifyAccess, async (req, res, next) => {
     try {
       const post = await PostModel.findByIdAndUpdate(req.params.id, {
         text: req.body.text,
@@ -76,11 +76,11 @@ export default function (app) {
       res.status(200).json(post);
     }
     catch (e) {
-  
+      next(e);
     }
   })
   
-  app.delete('/posts/:postId', verifyAccess, async(req, res) => {
+  app.delete('/posts/:postId', verifyAccess, async(req, res, next) => {
     try {
       const post = await PostModel.findByIdAndDelete(req.params.postId).exec();
       const likes = await LikeModel.deleteMany({post: req.params.postId}).exec();
@@ -95,11 +95,11 @@ export default function (app) {
       res.status(200).json(post._id);
     }
     catch (e) {
-  
+      next(e);
     }
   })
   
-  app.post('/posts/:postId/like', verifyAccess, async(req, res) => {
+  app.post('/posts/:postId/like', verifyAccess, async(req, res, next) => {
     try {
       const {authedUser} = res.locals;
       const like = new LikeModel({user: authedUser._id, post: req.params.postId});
@@ -115,11 +115,11 @@ export default function (app) {
       res.status(200).json(likedPost);
     }
     catch (e) {
-  
+      next(e);
     }
   })
   
-  app.delete('/posts/:postId/like', verifyAccess, async(req, res) => {
+  app.delete('/posts/:postId/like', verifyAccess, async(req, res, next) => {
     try {
       const {authedUser} = res.locals;
       const like = await LikeModel.findOneAndDelete({user: authedUser._id, post: req.params.postId}).exec();
@@ -135,11 +135,11 @@ export default function (app) {
       res.status(200).json(unlikedPost);
     }
     catch (e) {
-  
+      next(e);
     }
   })
   
-  app.post('/posts/:postId/comment', verifyAccess, async(req, res) => {
+  app.post('/posts/:postId/comment', verifyAccess, async(req, res, next) => {
     try {
       const {authedUser} = res.locals;
   
@@ -157,21 +157,24 @@ export default function (app) {
          userNickname: user.nickname
        };
      
-       const comments = await CommentModel.find({post: req.params.postId}).exec();
-       const nComments = comments.length;
+      //  const comments = await CommentModel.find({post: req.params.postId}).exec();
+      //  const nComments = comments.length;
      
-       res.status(200).json({commentsData: [commentsData], nComments});
+       res.status(200).json(commentsData);
     }
     catch (e) {
-  
+      next(e);
     }
    })
   
-  app.get('/posts/:postId/comments', verifyAccess, async (req, res) => {
+  app.get('/posts/:postId/comments', verifyAccess, async (req, res, next) => {
     try {
-      const receivedComments = await CommentModel.find({post: req.params.postId}).sort({createdAt: 1}).exec();
+      const [query, options] = new PaginationParameters(req).get();
+      query.post = req.params.postId;
+      const paginateResult = await CommentModel.paginate(query, options);
+      const comments = paginateResult.docs || [];
     
-      const commentsData = await Promise.all(receivedComments.map(comment => {
+      const commentsData = await Promise.all(comments.map(comment => {
         return UserModel.findById(comment.user).exec().then(user => {
           return {
             ...comment._doc,
@@ -181,16 +184,17 @@ export default function (app) {
         });
       }));
     
-      const nComments = commentsData.length;
-    
-      res.status(200).json({commentsData, nComments});
+      res.status(200).json({
+        items: commentsData,
+        hasNextPage: paginateResult.hasNextPage
+      });
     }
     catch (e) {
-  
+      next(e);
     }
   })
   
-  app.delete('/comments/:id', verifyAccess, async (req, res) => {
+  app.delete('/comments/:id', verifyAccess, async (req, res, next) => {
     try {
       const deletedComment = await CommentModel.findByIdAndDelete(req.params.id).exec();
       const comments = await CommentModel.find({post: deletedComment.post}).exec();
@@ -198,7 +202,7 @@ export default function (app) {
       res.status(200).json({deletedComment, nComments});
     }
     catch (e) {
-  
+      next(e);
     }
   })
   
@@ -214,7 +218,7 @@ export default function (app) {
       const newPost = await PostModel.findByIdAndUpdate(req.params.postId, {
         image: ''
       },{new: true}).exec();
-      res.status(200).json(newPost);
+      res.status(200).json({});
     }
     catch (e) {
       next(e);

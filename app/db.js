@@ -46,6 +46,7 @@ const CommentSchema = mongoose.Schema({
     type: String
   }
 }, { timestamps: true });
+CommentSchema.plugin(paginate);
 
 const LikeSchema = mongoose.Schema({
   user: {
