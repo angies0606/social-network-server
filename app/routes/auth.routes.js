@@ -71,7 +71,7 @@ export default function (app) {
         maxAge: accessTokenExpirationSeconds * 1000,
         secure: IS_PRODUCTION,
         httpOnly: false,
-        sameSite: false
+        sameSite: 'None'
       });
 
       // Генерируем refresh токен
@@ -85,7 +85,7 @@ export default function (app) {
         maxAge: refreshTokenExpirationSeconds * 1000,
         secure: IS_PRODUCTION,
         httpOnly: false,
-        sameSite: false
+        sameSite: 'None'
       });
 
       // Отправка ответа
@@ -151,7 +151,7 @@ export default function (app) {
         maxAge: accessTokenExpirationSeconds * 1000,
         secure: IS_PRODUCTION,
         httpOnly: false,
-        sameSite: false
+        sameSite: 'None'
       });
       
       const refreshTokenExpirationSeconds = Number(process.env.REFRESH_TOKEN_EXPIRATION_SECONDS);
@@ -164,7 +164,7 @@ export default function (app) {
         maxAge: refreshTokenExpirationSeconds * 1000,
         secure: IS_PRODUCTION,
         httpOnly: false,
-        sameSite: false
+        sameSite: 'None'
       });
 
       res.status(200).json({success: true});
@@ -181,6 +181,6 @@ export function cleanRefreshCookie(res) {
     maxAge: null,
     secure: IS_PRODUCTION,
     httpOnly: false,
-    sameSite: false
+    sameSite: 'None'
   });
 }
