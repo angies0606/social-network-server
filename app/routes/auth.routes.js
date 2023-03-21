@@ -70,8 +70,8 @@ export default function (app) {
       res.cookie(process.env.ACCESS_TOKEN_COOKIE_NAME, accessToken, {
         maxAge: accessTokenExpirationSeconds * 1000,
         secure: IS_PRODUCTION,
-        httpOnly: true,
-        sameSite: 'Lax'
+        httpOnly: false,
+        sameSite: false
       });
 
       // Генерируем refresh токен
@@ -84,8 +84,8 @@ export default function (app) {
       res.cookie(process.env.REFRESH_TOKEN_COOKIE_NAME, refreshToken, {
         maxAge: refreshTokenExpirationSeconds * 1000,
         secure: IS_PRODUCTION,
-        httpOnly: true,
-        sameSite: 'Lax'
+        httpOnly: false,
+        sameSite: false
       });
 
       // Отправка ответа
@@ -150,8 +150,8 @@ export default function (app) {
       res.cookie(process.env.ACCESS_TOKEN_COOKIE_NAME, accessToken, {
         maxAge: accessTokenExpirationSeconds * 1000,
         secure: IS_PRODUCTION,
-        httpOnly: true,
-        sameSite: 'Lax'
+        httpOnly: false,
+        sameSite: false
       });
       
       const refreshTokenExpirationSeconds = Number(process.env.REFRESH_TOKEN_EXPIRATION_SECONDS);
@@ -163,8 +163,8 @@ export default function (app) {
       res.cookie(process.env.REFRESH_TOKEN_COOKIE_NAME, newRefreshToken, {
         maxAge: refreshTokenExpirationSeconds * 1000,
         secure: IS_PRODUCTION,
-        httpOnly: true,
-        sameSite: 'Lax'
+        httpOnly: false,
+        sameSite: false
       });
 
       res.status(200).json({success: true});
@@ -180,7 +180,7 @@ export function cleanRefreshCookie(res) {
     res.cookie(process.env.REFRESH_TOKEN_COOKIE_NAME, null, {
     maxAge: null,
     secure: IS_PRODUCTION,
-    httpOnly: true,
-    sameSite: 'Lax'
+    httpOnly: false,
+    sameSite: false
   });
 }
