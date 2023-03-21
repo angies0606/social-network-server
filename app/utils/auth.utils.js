@@ -39,12 +39,12 @@ export function cleanAuthCookies(res) {
     maxAge: null,
     secure: IS_PRODUCTION,
     httpOnly: true,
-    sameSite: true
+    sameSite: false
   });
   res.cookie(process.env.REFRESH_TOKEN_COOKIE_NAME, null, {
     maxAge: null,
     secure: IS_PRODUCTION,
     httpOnly: true,
-    sameSite: true
+    sameSite: false
   });
 }
