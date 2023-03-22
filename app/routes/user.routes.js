@@ -3,6 +3,7 @@ import {upload, gfs} from "../images.js";
 import { UserModel } from "#app/db.js";
 import {verifyAccess} from "#utils/auth.utils.js";
 import { PaginationParameters } from "mongoose-paginate-v2";
+import {getImageUrl} from '#utils/user.utils.js';
 
 export default function (app) {
   app.get('/users', verifyAccess, async (req, res, next) => {
@@ -37,7 +38,7 @@ export default function (app) {
       const {authedUser} = res.locals;
       const fileId = req.file.id.toString();
       const fileName = req.file.filename;
-      const imageUrl = `${req.protocol}://${req.hostname}:${process.env.PORT}/images/${fileId}/${fileName}`;
+      const imageUrl = getImageUrl(req, fileId, fileName);
       const user = await UserModel.findById(authedUser._id).exec();
       const userAvatar = user.avatar;
       const updatedUser = await UserModel.findByIdAndUpdate(authedUser._id, {
@@ -60,7 +61,7 @@ export default function (app) {
       const {authedUser} = res.locals;
       const fileId = req.file.id.toString();
       const fileName = req.file.filename;
-      const imageUrl = `${req.protocol}://${req.hostname}:${process.env.PORT}/images/${fileId}/${fileName}`;
+      const imageUrl = getImageUrl(req, fileId, fileName);
       const user = await UserModel.findById(authedUser._id).exec();
       const userBanner = user.banner;
     
