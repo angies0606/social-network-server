@@ -9,7 +9,10 @@ import imageRoutes from "#routes/image.routes.js";
 
 const app = express();
 const corsOptions = {
-  origin: ['http://localhost:3000'],
+  origin: [
+    'http://localhost:3000',
+    'https://angies0606.github.io'
+  ],
   credentials: true,
   optionsSuccessStatus: 200
 };
