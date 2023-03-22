@@ -38,13 +38,13 @@ export function cleanAuthCookies(res) {
   res.cookie(process.env.ACCESS_TOKEN_COOKIE_NAME, null, {
     maxAge: null,
     secure: IS_PRODUCTION,
-    httpOnly: false,
-    sameSite: 'None'
+    httpOnly: true,
+    sameSite: false
   });
   res.cookie(process.env.REFRESH_TOKEN_COOKIE_NAME, null, {
     maxAge: null,
     secure: IS_PRODUCTION,
-    httpOnly: false,
-    sameSite: 'None'
+    httpOnly: true,
+    sameSite: false
   });
 }
