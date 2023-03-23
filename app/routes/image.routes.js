@@ -1,13 +1,15 @@
 import {upload, gfs} from "../images.js";
 import {verifyAccess} from "#utils/auth.utils.js";
+import {getImageUrl} from "#utils/image.utils.js";
 
 export default function (app) {
   app.post('/images', upload.single('img'), verifyAccess, (req, res) => {
     try {
       const fileId = req.file.id.toString();
       const fileName = req.file.filename;
+      const imageUrl = getImageUrl(req, fileId, fileName);
       res.status(201).send({
-        imageUrl: `${req.protocol}://${req.hostname}:${process.env.PORT}/images/${fileId}/${fileName}`
+        imageUrl
       })
     }
     catch (e) {

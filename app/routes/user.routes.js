@@ -3,7 +3,7 @@ import {upload, gfs} from "../images.js";
 import { UserModel } from "#app/db.js";
 import {verifyAccess} from "#utils/auth.utils.js";
 import { PaginationParameters } from "mongoose-paginate-v2";
-import {getImageUrl} from '#utils/user.utils.js';
+import {getImageUrl} from '#utils/image.utils.js';
 
 export default function (app) {
   app.get('/users', verifyAccess, async (req, res, next) => {
