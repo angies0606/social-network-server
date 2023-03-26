@@ -21,6 +21,8 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
 
+app.enable('trust proxy');
+
 authRoutes(app);
 userRoutes(app);
 postRoutes(app);

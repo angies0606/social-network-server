@@ -143,24 +143,28 @@ export default function (app) {
     try {
       const {authedUser} = res.locals;
   
-      let commentsData = new CommentModel({
+      let commentData = new CommentModel({
         user: authedUser._id,
         post: req.params.postId,
         text: req.body.text
-       });
+      });
   
-       await commentsData.save();
-       const user = await UserModel.findById(commentsData.user).exec();
-       commentsData = {
-         ...commentsData._doc,
-         userAvatar: user.avatar,
-         userNickname: user.nickname
-       };
-     
+      await commentData.save();
+      const user = await UserModel.findById(commentData.user).exec();
+      const nComments = await CommentModel.find({post: req.params.postId}).exec().then(comments => {
+        return comments.length;
+      })
+
+      commentData = {
+        ...commentData._doc,
+        userAvatar: user.avatar,
+        userNickname: user.nickname
+      };
+    
       //  const comments = await CommentModel.find({post: req.params.postId}).exec();
       //  const nComments = comments.length;
-     
-       res.status(200).json(commentsData);
+    
+      res.status(200).json({commentData: commentData, nComments});
     }
     catch (e) {
       next(e);
@@ -185,9 +189,20 @@ export default function (app) {
       }));
     
       res.status(200).json({
-        items: commentsData,
+        commentsData: [...commentsData],
         hasNextPage: paginateResult.hasNextPage
       });
+    }
+    catch (e) {
+      next(e);
+    }
+  })
+
+  app.get('/posts/:postId/image', verifyAccess, async (req, res, next) => {
+    try {
+      const post = await PostModel.findById(req.params.postId).exec();
+      const imageUrl = post.image;
+      res.status(200).json({imageUrl});
     }
     catch (e) {
       next(e);
